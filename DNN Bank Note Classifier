@@ -1,0 +1,98 @@
+#Classificador de Cédulas usando DNN com o Tensorflow, tipo de tarefa perfeitamente adaptável para redes neurais e Deep Learning!
+
+#Os dados consistem de 5 colunas:
+#    variancia da imagem compactada (continuos)
+#    cauda of Wavelet Transformed image (continuos)
+#    curtose of Wavelet Transformed image (continuos)
+#    entropia of image (continuos)
+#    classe indica se a cédula é verdadeira ou não(inteiro)
+# Criei o caderno no Jupyter da minha máquina virtual local, e subi os dados pra Google Cloud (poderia ter usado o API do Tensorflow)
+# Subi o banco de dados pra Google Cloud
+
+
+#READING in the bank_note_data.csv file 
+
+import pandas as pd
+df=pd.read_csv("../input/bank_note_data.csv")
+#Check the head of the Data 
+df.head()
+#We'll just do a few quick plots of the data.
+#Import seaborn and set matplolib inline for viewing
+
+import seaborn as sns
+import matplotlib as plt
+%matplotlib inline
+
+#PLOTTING Create a Countplot of the Classes (Authentic 1 vs Fake 0)
+sns.countplot(data=df,x="Class")
+#Create a PairPlot of the Data with Seaborn, set Hue to Class
+sns.pairplot(data=df,hue="Class")
+
+#SCALING Standart Scaling
+from sklearn.preprocessing import StandardScaler
+scaler = StandardScaler()
+#Fit scaler to the features.
+scaler.fit(df.drop("Class",axis=1))
+#Use the .transform() method to transform the features to a scaled version.
+scaled_fea = scaler.fit_transform(df.drop("Class",axis=1))
+#Convert the scaled features to a dataframe and check the head of this dataframe to make sure the scaling worked.
+df_1=pd.DataFrame(scaled_fea,columns=df.columns[:-1])
+df_1.head()
+
+#SPLITTING  Create two objects X and y which are the scaled feature values and labels respectively.
+X=df_1
+y=df["Class"]
+X=X.as_matrix()
+y=y.as_matrix()
+#Use SciKit Learn to create training and testing sets of the data as we've done in previous lectures:
+from sklearn.model_selection import train_test_split
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3)
+
+#TENSORFLOW import
+Import tensorflow.contrib.learn.python.learn as learn
+import tensorflow as tf
+import tensorflow.contrib.learn as learn
+
+#CREATING DNNClassifier from learn. Set it to have 2 classes and a [10,20,10] hidden unit layer structure
+feature_columns = [tf.contrib.layers.real_valued_column("", dimension=1)]
+classifier = learn.DNNClassifier(feature_columns=feature_columns,hidden_units=[10, 20, 10], n_classes=2)
+
+#FITTING classifier to the training data. Use steps 200 batch_size 20
+classifier.fit(X_train, y_train, steps=200, batch_size=20)
+
+#MODEL EVALUATION
+ote_predictions = list(classifier.predict(X_test))
+
+#REPORTING Now create a classification report and a Confusion Matrix. 
+from sklearn.metrics import classification_report,confusion_matrix
+type(y_test)
+print(confusion_matrix(y_test,note_predictions))
+print(classification_report(y_test,note_predictions))
+
+#Optional Comparison The results from the DNN model are extremely accurate. Let's compare this to a Random Forest Classifier 
+#Using SciKit Learn to Create a Random Forest Classifier and compare the confusion matrix and classification report to the DNN model
+
+from sklearn.ensemble import RandomForestClassifier
+rfc = RandomForestClassifier(n_estimators=200)
+rfc.fit(X_train,y_train)
+rfc_preds = rfc.predict(X_test)
+print(classification_report(y_test,rfc_preds))
+print(confusion_matrix(y_test,rfc_preds))
+
+#Not quite as good as the DNN model. Hopefully you have seen the power of DNN!
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
